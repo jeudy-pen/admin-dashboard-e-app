@@ -21,12 +21,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalFooter,
+  ModalDescription,
+} from '@/components/ui/modal';
 import {
   Tabs,
   TabsContent,
@@ -34,9 +35,9 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { UserPlus, Shield, Trash2, Users } from 'lucide-react';
-import { toast } from 'sonner';
+import { UserPlus, Shield, Trash2, Users, Settings as SettingsIcon, Globe } from 'lucide-react';
 import { format } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Profile {
   id: string;
@@ -53,15 +54,29 @@ interface UserRole {
 }
 
 export default function Settings() {
+  const { t, language, setLanguage } = useLanguage();
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   type RoleType = 'admin' | 'manager' | 'user';
   const [selectedRole, setSelectedRole] = useState<RoleType>('user');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserName, setNewUserName] = useState('');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  const showSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
+  const showError = (message: string) => {
+    setErrorMessage(message);
+    setTimeout(() => setErrorMessage(null), 3000);
+  };
 
   const { data: profiles, isLoading: profilesLoading } = useQuery({
     queryKey: ['profiles'],
@@ -101,29 +116,27 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
-      toast.success('User created successfully');
+      showSuccess('User created successfully');
       setIsUserDialogOpen(false);
       setNewUserEmail('');
       setNewUserPassword('');
       setNewUserName('');
     },
-    onError: (error: Error) => toast.error(error.message || 'Failed to create user'),
+    onError: (error: Error) => showError(error.message || 'Failed to create user'),
   });
 
   const assignRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: 'admin' | 'manager' | 'user' }) => {
-      // First remove existing roles
       await supabase.from('user_roles').delete().eq('user_id', userId);
-      // Then assign new role
       const { error } = await supabase.from('user_roles').insert([{ user_id: userId, role }]);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_roles'] });
-      toast.success('Role assigned successfully');
+      showSuccess('Role assigned successfully');
       setIsRoleDialogOpen(false);
     },
-    onError: () => toast.error('Failed to assign role'),
+    onError: () => showError('Failed to assign role'),
   });
 
   const removeRoleMutation = useMutation({
@@ -133,9 +146,10 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_roles'] });
-      toast.success('Role removed successfully');
+      showSuccess('Role removed successfully');
+      setIsDeleteDialogOpen(false);
     },
-    onError: () => toast.error('Failed to remove role'),
+    onError: () => showError('Failed to remove role'),
   });
 
   const getUserRole = (userId: string) => {
@@ -160,12 +174,29 @@ export default function Settings() {
     setIsRoleDialogOpen(true);
   };
 
+  const openDeleteDialog = (userId: string) => {
+    setSelectedUserId(userId);
+    setIsDeleteDialogOpen(true);
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
+        {/* Success/Error Messages */}
+        {successMessage && (
+          <div className="fixed top-4 right-4 z-50 bg-primary text-primary-foreground px-4 py-3 rounded-lg shadow-lg animate-in fade-in slide-in-from-top-2">
+            {successMessage}
+          </div>
+        )}
+        {errorMessage && (
+          <div className="fixed top-4 right-4 z-50 bg-destructive text-destructive-foreground px-4 py-3 rounded-lg shadow-lg animate-in fade-in slide-in-from-top-2">
+            {errorMessage}
+          </div>
+        )}
+
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground">Manage users and permissions</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('settings')}</h1>
+          <p className="text-muted-foreground">Manage users, permissions, and preferences</p>
         </div>
 
         <Tabs defaultValue="users" className="space-y-4">
@@ -176,65 +207,20 @@ export default function Settings() {
             </TabsTrigger>
             <TabsTrigger value="permissions" className="gap-2">
               <Shield className="h-4 w-4" />
-              Permissions
+              {t('permissions')}
+            </TabsTrigger>
+            <TabsTrigger value="general" className="gap-2">
+              <SettingsIcon className="h-4 w-4" />
+              {t('general')}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="space-y-4">
             <div className="flex justify-end">
-              <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Create User
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create New User</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleCreateUser} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input
-                        id="name"
-                        value={newUserName}
-                        onChange={(e) => setNewUserName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={newUserEmail}
-                        onChange={(e) => setNewUserEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        value={newUserPassword}
-                        onChange={(e) => setNewUserPassword(e.target.value)}
-                        minLength={6}
-                        required
-                      />
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button type="button" variant="outline" onClick={() => setIsUserDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={createUserMutation.isPending}>
-                        {createUserMutation.isPending ? 'Creating...' : 'Create User'}
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+              <Button onClick={() => setIsUserDialogOpen(true)} className="hover-loading">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Create User
+              </Button>
             </div>
 
             <div className="bg-card rounded-lg border border-border">
@@ -251,7 +237,7 @@ export default function Settings() {
                   {profilesLoading ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                        Loading...
+                        {t('loading')}
                       </TableCell>
                     </TableRow>
                   ) : profiles?.length === 0 ? (
@@ -272,7 +258,7 @@ export default function Settings() {
                         <TableCell>
                           {getUserRole(profile.id) ? (
                             <Badge variant="secondary" className="capitalize">
-                              {getUserRole(profile.id)}
+                              {t(getUserRole(profile.id) || '')}
                             </Badge>
                           ) : (
                             <span className="text-muted-foreground text-sm">No role</span>
@@ -283,15 +269,15 @@ export default function Settings() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" onClick={() => openRoleDialog(profile.id)}>
+                            <Button size="icon" variant="ghost" onClick={() => openRoleDialog(profile.id)} className="hover-loading">
                               <Shield className="h-4 w-4" />
                             </Button>
                             {getUserRole(profile.id) && (
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="text-destructive"
-                                onClick={() => removeRoleMutation.mutate(profile.id)}
+                                className="text-destructive hover-loading"
+                                onClick={() => openDeleteDialog(profile.id)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -312,9 +298,9 @@ export default function Settings() {
               <div className="space-y-4">
                 <div className="grid grid-cols-4 gap-4 text-sm font-medium text-muted-foreground border-b border-border pb-2">
                   <div>Permission</div>
-                  <div className="text-center">Admin</div>
-                  <div className="text-center">Manager</div>
-                  <div className="text-center">User</div>
+                  <div className="text-center">{t('admin')}</div>
+                  <div className="text-center">{t('manager')}</div>
+                  <div className="text-center">{t('user')}</div>
                 </div>
                 {[
                   { name: 'View Dashboard', admin: true, manager: true, user: false },
@@ -348,39 +334,147 @@ export default function Settings() {
               </div>
             </div>
           </TabsContent>
+
+          <TabsContent value="general" className="space-y-4">
+            <div className="bg-card rounded-lg border border-border p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                {t('language')}
+              </h3>
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <Button
+                    variant={language === 'en' ? 'default' : 'outline'}
+                    onClick={() => setLanguage('en')}
+                    className="hover-loading"
+                  >
+                    🇺🇸 English (Nunito)
+                  </Button>
+                  <Button
+                    variant={language === 'km' ? 'default' : 'outline'}
+                    onClick={() => setLanguage('km')}
+                    className="hover-loading"
+                  >
+                    🇰🇭 ភាសាខ្មែរ (Kantumruy Pro)
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {language === 'en' 
+                    ? 'Select your preferred language. The app will update automatically.'
+                    : 'ជ្រើសរើសភាសាដែលអ្នកពេញចិត្ត។ កម្មវិធីនឹងធ្វើបច្ចុប្បន្នភាពដោយស្វ័យប្រវត្តិ។'}
+                </p>
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
 
-        {/* Role Assignment Dialog */}
-        <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Assign Role</DialogTitle>
-            </DialogHeader>
+        {/* Create User Modal */}
+        <Modal open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
+          <ModalContent>
+            <ModalHeader>
+              <ModalTitle>Create New User</ModalTitle>
+              <ModalDescription>Add a new user to the system</ModalDescription>
+            </ModalHeader>
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  className="hover-input"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  className="hover-input"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  className="hover-input"
+                  minLength={6}
+                  required
+                />
+              </div>
+              <ModalFooter>
+                <Button type="button" variant="outline" onClick={() => setIsUserDialogOpen(false)} className="hover-loading">
+                  {t('cancel')}
+                </Button>
+                <Button type="submit" disabled={createUserMutation.isPending} className="hover-loading">
+                  {createUserMutation.isPending ? t('loading') : 'Create User'}
+                </Button>
+              </ModalFooter>
+            </form>
+          </ModalContent>
+        </Modal>
+
+        {/* Role Assignment Modal */}
+        <Modal open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
+          <ModalContent>
+            <ModalHeader>
+              <ModalTitle>{t('assignRole')}</ModalTitle>
+              <ModalDescription>Select a role for this user</ModalDescription>
+            </ModalHeader>
             <form onSubmit={handleAssignRole} className="space-y-4">
               <div className="space-y-2">
                 <Label>Role</Label>
                 <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as RoleType)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="hover-input">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="admin">{t('admin')}</SelectItem>
+                    <SelectItem value="manager">{t('manager')}</SelectItem>
+                    <SelectItem value="user">{t('user')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={() => setIsRoleDialogOpen(false)}>
-                  Cancel
+              <ModalFooter>
+                <Button type="button" variant="outline" onClick={() => setIsRoleDialogOpen(false)} className="hover-loading">
+                  {t('cancel')}
                 </Button>
-                <Button type="submit">
-                  Assign Role
+                <Button type="submit" className="hover-loading">
+                  {t('assignRole')}
                 </Button>
-              </div>
+              </ModalFooter>
             </form>
-          </DialogContent>
-        </Dialog>
+          </ModalContent>
+        </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <Modal open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <ModalContent>
+            <ModalHeader>
+              <ModalTitle>{t('confirm')} {t('delete')}</ModalTitle>
+              <ModalDescription>Are you sure you want to remove this role? This action cannot be undone.</ModalDescription>
+            </ModalHeader>
+            <ModalFooter>
+              <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)} className="hover-loading">
+                {t('cancel')}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => selectedUserId && removeRoleMutation.mutate(selectedUserId)}
+                className="hover-loading"
+              >
+                {t('delete')}
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       </div>
     </AdminLayout>
   );
