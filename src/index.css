@@ -160,26 +160,48 @@ All colors MUST be HSL.
   }
 }
 
-/* Gradient border hover styles - rainbow effect like product card */
+/* Animated gradient border - Lottie-like autoplay loop */
 @layer components {
-  .hover-gradient {
-    @apply relative transition-all duration-300;
+  @keyframes border-spin {
+    0% {
+      --gradient-angle: 0deg;
+    }
+    100% {
+      --gradient-angle: 360deg;
+    }
+  }
+
+  @property --gradient-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  .hover-gradient,
+  .hover-loading,
+  button,
+  [role="button"] {
+    @apply relative;
+    isolation: isolate;
   }
   
-  .hover-gradient::before {
+  .hover-gradient::before,
+  .hover-loading::before,
+  button::before,
+  [role="button"]::before {
     content: '';
     position: absolute;
     inset: -2px;
     border-radius: calc(var(--radius) + 2px);
-    padding: 2px;
-    background: linear-gradient(
-      180deg,
-      hsl(0 84% 60%) 0%,
-      hsl(25 95% 53%) 20%,
-      hsl(45 93% 47%) 40%,
-      hsl(142 71% 45%) 60%,
-      hsl(199 89% 48%) 80%,
-      hsl(262 83% 58%) 100%
+    background: conic-gradient(
+      from var(--gradient-angle),
+      hsl(0 84% 60%),
+      hsl(25 95% 53%),
+      hsl(45 93% 47%),
+      hsl(142 71% 45%),
+      hsl(199 89% 48%),
+      hsl(262 83% 58%),
+      hsl(0 84% 60%)
     );
     -webkit-mask: 
       linear-gradient(#fff 0 0) content-box, 
@@ -189,41 +211,77 @@ All colors MUST be HSL.
       linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
+    padding: 2px;
+    animation: border-spin 3s linear infinite;
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none;
     z-index: -1;
   }
   
-  .hover-gradient:hover::before {
+  .hover-gradient:hover::before,
+  .hover-loading:hover::before,
+  button:hover::before,
+  [role="button"]:hover::before {
     opacity: 1;
   }
-  
-  .hover-gradient:hover {
-    transform: translateY(-1px);
+
+  /* Input animated border */
+  .hover-gradient-input,
+  .hover-input,
+  input,
+  textarea,
+  select {
+    @apply relative;
+    isolation: isolate;
   }
 
-  /* Gradient border for inputs */
-  .hover-gradient-input {
-    @apply relative transition-all duration-300;
-    background: hsl(var(--card));
+  .hover-gradient-input::before,
+  .hover-input::before,
+  input::before,
+  textarea::before,
+  select::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: calc(var(--radius) + 2px);
+    background: conic-gradient(
+      from var(--gradient-angle),
+      hsl(0 84% 60%),
+      hsl(25 95% 53%),
+      hsl(45 93% 47%),
+      hsl(142 71% 45%),
+      hsl(199 89% 48%),
+      hsl(262 83% 58%),
+      hsl(0 84% 60%)
+    );
+    -webkit-mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+    mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    padding: 2px;
+    animation: border-spin 3s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: -1;
   }
-  
-  .hover-gradient-input:hover,
-  .hover-gradient-input:focus {
-    outline: none;
-    box-shadow: 
-      -3px 0 0 0 hsl(0 84% 60%),
-      0 3px 0 0 hsl(25 95% 53%),
-      0 0 0 2px hsl(var(--primary) / 0.2);
-  }
-  
-  .hover-gradient-input:focus {
-    box-shadow: 
-      -3px 0 0 0 hsl(0 84% 60%),
-      3px 0 0 0 hsl(262 83% 58%),
-      0 3px 0 0 linear-gradient(90deg, hsl(25 95% 53%), hsl(142 71% 45%)),
-      0 0 0 2px hsl(var(--primary) / 0.3);
+
+  .hover-gradient-input:hover::before,
+  .hover-gradient-input:focus::before,
+  .hover-input:hover::before,
+  .hover-input:focus::before,
+  input:hover::before,
+  input:focus::before,
+  textarea:hover::before,
+  textarea:focus::before,
+  select:hover::before,
+  select:focus::before {
+    opacity: 1;
   }
 
   /* Card with gradient border on left and bottom */
@@ -238,14 +296,17 @@ All colors MUST be HSL.
     top: 0;
     bottom: 0;
     width: 4px;
-    background: linear-gradient(
-      180deg,
-      hsl(0 84% 60%) 0%,
-      hsl(25 95% 53%) 25%,
-      hsl(45 93% 47%) 50%,
-      hsl(142 71% 45%) 75%,
-      hsl(199 89% 48%) 100%
+    background: conic-gradient(
+      from var(--gradient-angle),
+      hsl(0 84% 60%),
+      hsl(25 95% 53%),
+      hsl(45 93% 47%),
+      hsl(142 71% 45%),
+      hsl(199 89% 48%),
+      hsl(262 83% 58%),
+      hsl(0 84% 60%)
     );
+    animation: border-spin 3s linear infinite;
     border-radius: var(--radius) 0 0 var(--radius);
   }
   
@@ -256,32 +317,17 @@ All colors MUST be HSL.
     right: 0;
     bottom: 0;
     height: 4px;
-    background: linear-gradient(
-      90deg,
-      hsl(0 84% 60%) 0%,
-      hsl(25 95% 53%) 25%,
-      hsl(45 93% 47%) 50%,
-      hsl(142 71% 45%) 75%,
-      hsl(199 89% 48%) 100%
+    background: conic-gradient(
+      from var(--gradient-angle),
+      hsl(0 84% 60%),
+      hsl(25 95% 53%),
+      hsl(45 93% 47%),
+      hsl(142 71% 45%),
+      hsl(199 89% 48%),
+      hsl(262 83% 58%),
+      hsl(0 84% 60%)
     );
+    animation: border-spin 3s linear infinite;
     border-radius: 0 0 var(--radius) var(--radius);
-  }
-
-  /* Keep old hover-loading for backwards compatibility */
-  .hover-loading {
-    @apply hover-gradient;
-  }
-  
-  .hover-input {
-    @apply hover-gradient-input;
-  }
-  
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(100%);
-    }
   }
 }
