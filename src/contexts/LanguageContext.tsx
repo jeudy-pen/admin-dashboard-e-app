@@ -35,6 +35,8 @@ export const translations: Translations = {
   close: { en: 'Close', km: 'បិទ' },
   yes: { en: 'Yes', km: 'បាទ/ចាស' },
   no: { en: 'No', km: 'ទេ' },
+  back: { en: 'Back', km: 'ថយក្រោយ' },
+  okay: { en: 'Okay', km: 'យល់ព្រម' },
   
   // Dashboard
   totalRevenue: { en: 'Total Revenue', km: 'ចំណូលសរុប' },
@@ -107,6 +109,48 @@ export const translations: Translations = {
   khmer: { en: 'Khmer', km: 'ខ្មែរ' },
   noNotifications: { en: 'No notifications', km: 'គ្មានការជូនដំណឹង' },
   searchResults: { en: 'Search Results', km: 'លទ្ធផលស្វែងរក' },
+  
+  // Auth page
+  adminDashboard: { en: 'Admin Dashboard', km: 'ផ្ទាំងគ្រប់គ្រងអ្នកគ្រប់គ្រង' },
+  signInToAccount: { en: 'Sign in to your account', km: 'ចូលគណនីរបស់អ្នក' },
+  createYourAccount: { en: 'Create your account', km: 'បង្កើតគណនីរបស់អ្នក' },
+  signIn: { en: 'Sign In', km: 'ចូល' },
+  signUp: { en: 'Sign Up', km: 'ចុះឈ្មោះ' },
+  signingIn: { en: 'Signing in...', km: 'កំពុងចូល...' },
+  creatingAccount: { en: 'Creating account...', km: 'កំពុងបង្កើតគណនី...' },
+  forgotPassword: { en: 'Forgot Password?', km: 'ភ្លេចពាក្យសម្ងាត់?' },
+  rememberMe: { en: 'Remember me', km: 'ចងចាំខ្ញុំ' },
+  agreeToTerms: { en: 'I agree to the Terms and Conditions', km: 'ខ្ញុំយល់ព្រមលក្ខខណ្ឌ' },
+  termsAndConditions: { en: 'Terms and Conditions', km: 'លក្ខខណ្ឌ' },
+  dontHaveAccount: { en: "Don't have an account? Sign up", km: 'មិនមានគណនី? ចុះឈ្មោះ' },
+  alreadyHaveAccount: { en: 'Already have an account? Sign in', km: 'មានគណនីរួចហើយ? ចូល' },
+  welcomeBack: { en: 'Welcome back!', km: 'សូមស្វាគមន៍មកវិញ!' },
+  signInSuccess: { en: 'You have successfully signed in.', km: 'អ្នកបានចូលជោគជ័យ។' },
+  accountCreated: { en: 'Account created!', km: 'បង្កើតគណនីជោគជ័យ!' },
+  checkEmailVerify: { en: 'Please check your email to verify your account.', km: 'សូមពិនិត្យអ៊ីមែលរបស់អ្នកដើម្បីផ្ទៀងផ្ទាត់គណនី។' },
+  resetPasswordSent: { en: 'Password reset email sent!', km: 'បានផ្ញើអ៊ីមែលកំណត់ពាក្យសម្ងាត់ឡើងវិញ!' },
+  checkEmailReset: { en: 'Please check your email for password reset instructions.', km: 'សូមពិនិត្យអ៊ីមែលរបស់អ្នកសម្រាប់ការណែនាំកំណត់ពាក្យសម្ងាត់ឡើងវិញ។' },
+  
+  // Password strength
+  passwordStrength: { en: 'Password Strength', km: 'កម្លាំងពាក្យសម្ងាត់' },
+  weak: { en: 'Weak', km: 'ខ្សោយ' },
+  fair: { en: 'Fair', km: 'ល្មម' },
+  good: { en: 'Good', km: 'ល្អ' },
+  strong: { en: 'Strong', km: 'រឹងមាំ' },
+  
+  // OTP
+  verifyEmail: { en: 'Verify Your Email', km: 'ផ្ទៀងផ្ទាត់អ៊ីមែលរបស់អ្នក' },
+  otpSentTo: { en: 'We sent a verification code to', km: 'យើងបានផ្ញើលេខកូដផ្ទៀងផ្ទាត់ទៅ' },
+  verify: { en: 'Verify', km: 'ផ្ទៀងផ្ទាត់' },
+  resendIn: { en: 'Resend code in', km: 'ផ្ញើលេខកូដម្តងទៀតក្នុង' },
+  resendCode: { en: 'Resend Code', km: 'ផ្ញើលេខកូដម្តងទៀត' },
+  sending: { en: 'Sending...', km: 'កំពុងផ្ញើ...' },
+  verificationSuccess: { en: 'Email verified successfully!', km: 'ផ្ទៀងផ្ទាត់អ៊ីមែលជោគជ័យ!' },
+  
+  // Placeholders
+  enterEmail: { en: 'Enter your email', km: 'បញ្ចូលអ៊ីមែលរបស់អ្នក' },
+  enterPassword: { en: 'Enter your password', km: 'បញ្ចូលពាក្យសម្ងាត់របស់អ្នក' },
+  enterFullName: { en: 'Enter your full name', km: 'បញ្ចូលឈ្មោះពេញរបស់អ្នក' },
 };
 
 interface LanguageContextType {
