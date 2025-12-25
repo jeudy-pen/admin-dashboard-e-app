@@ -359,7 +359,7 @@ export default function Settings() {
             <form onSubmit={handleAssignRole} className="space-y-4">
               <div className="space-y-2">
                 <Label>Role</Label>
-                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as RoleType)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
