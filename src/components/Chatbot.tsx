@@ -66,7 +66,7 @@ export default function Chatbot() {
       <Button
         onClick={() => setIsOpen(true)}
         className={cn(
-          'fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50',
+          'fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 hover-gradient',
           'hover:scale-110 transition-transform duration-200',
           isOpen && 'hidden'
         )}
@@ -150,14 +150,14 @@ export default function Chatbot() {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={t('typeMessage')}
-                className="flex-1"
+                className="flex-1 hover-gradient-input"
                 disabled={isLoading}
               />
               <Button
                 onClick={handleSend}
                 disabled={!inputValue.trim() || isLoading}
                 size="icon"
-                className="hover-loading"
+                className="hover-gradient"
               >
                 <Send className="h-4 w-4" />
               </Button>
