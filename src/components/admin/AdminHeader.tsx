@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Bell, Search, Globe } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Search, Globe, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -28,6 +29,7 @@ interface Notification {
 
 export default function AdminHeader() {
   const { language, setLanguage, t } = useLanguage();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
@@ -51,8 +53,15 @@ export default function AdminHeader() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Implement global search functionality
-    console.log('Searching for:', searchQuery);
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
 
   return (
@@ -65,18 +74,22 @@ export default function AdminHeader() {
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder={t('search')}
-              className="pl-10 hover-input"
+              className="pl-10 hover-gradient-input"
             />
           </div>
         </form>
 
         <div className="flex items-center gap-2">
-          {/* Language Switcher */}
+          {/* Language Switcher with Icon and Text */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="hover-loading">
-                <Globe className="h-5 w-5" />
+              <Button variant="ghost" className="hover-gradient gap-2">
+                <Languages className="h-5 w-5" />
+                <span className="hidden sm:inline">
+                  {language === 'en' ? 'EN' : 'ខ្មែរ'}
+                </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -84,13 +97,15 @@ export default function AdminHeader() {
                 onClick={() => setLanguage('en')}
                 className={cn(language === 'en' && 'bg-accent')}
               >
-                🇺🇸 English
+                <span className="mr-2">🇺🇸</span>
+                {t('english')} (Nunito)
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setLanguage('km')}
                 className={cn(language === 'km' && 'bg-accent')}
               >
-                🇰🇭 ភាសាខ្មែរ
+                <span className="mr-2">🇰🇭</span>
+                {t('khmer')} (Kantumruy Pro)
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -98,7 +113,7 @@ export default function AdminHeader() {
           {/* Notifications */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative hover-loading">
+              <Button variant="ghost" size="icon" className="relative hover-gradient">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                   <Badge
@@ -114,7 +129,7 @@ export default function AdminHeader() {
               <div className="space-y-4">
                 <h4 className="font-semibold">{t('notifications')}</h4>
                 {notifications.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No notifications</p>
+                  <p className="text-sm text-muted-foreground">{t('noNotifications')}</p>
                 ) : (
                   <div className="space-y-2">
                     {notifications.map((notification) => (

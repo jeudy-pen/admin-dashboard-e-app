@@ -28,6 +28,7 @@ import {
   ModalFooter,
   ModalDescription,
 } from '@/components/ui/modal';
+import { AlertModal } from '@/components/ui/alert-modal';
 import {
   Tabs,
   TabsContent,
@@ -35,7 +36,7 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { UserPlus, Shield, Trash2, Users, Settings as SettingsIcon, Globe } from 'lucide-react';
+import { UserPlus, Shield, Trash2, Users, Settings as SettingsIcon, Globe, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -53,29 +54,34 @@ interface UserRole {
   created_at: string;
 }
 
+type RoleType = 'admin' | 'manager' | 'user';
+
 export default function Settings() {
   const { t, language, setLanguage } = useLanguage();
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  type RoleType = 'admin' | 'manager' | 'user';
   const [selectedRole, setSelectedRole] = useState<RoleType>('user');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserName, setNewUserName] = useState('');
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [editUserName, setEditUserName] = useState('');
+  const [editUserEmail, setEditUserEmail] = useState('');
+  
+  // Alert modal state
+  const [alertModal, setAlertModal] = useState<{
+    open: boolean;
+    type: 'success' | 'error';
+    message: string;
+  }>({ open: false, type: 'success', message: '' });
+  
   const queryClient = useQueryClient();
 
-  const showSuccess = (message: string) => {
-    setSuccessMessage(message);
-    setTimeout(() => setSuccessMessage(null), 3000);
-  };
-
-  const showError = (message: string) => {
-    setErrorMessage(message);
-    setTimeout(() => setErrorMessage(null), 3000);
+  const showAlert = (type: 'success' | 'error', message: string) => {
+    setAlertModal({ open: true, type, message });
   };
 
   const { data: profiles, isLoading: profilesLoading } = useQuery({
@@ -116,27 +122,43 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
-      showSuccess('User created successfully');
+      showAlert('success', t('userCreatedSuccess'));
       setIsUserDialogOpen(false);
       setNewUserEmail('');
       setNewUserPassword('');
       setNewUserName('');
     },
-    onError: (error: Error) => showError(error.message || 'Failed to create user'),
+    onError: (error: Error) => showAlert('error', error.message || t('failedToCreateUser')),
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async ({ userId, fullName }: { userId: string; fullName: string }) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ full_name: fullName })
+        .eq('id', userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      showAlert('success', t('success'));
+      setIsEditUserDialogOpen(false);
+    },
+    onError: () => showAlert('error', t('error')),
   });
 
   const assignRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: 'admin' | 'manager' | 'user' }) => {
+    mutationFn: async ({ userId, role }: { userId: string; role: RoleType }) => {
       await supabase.from('user_roles').delete().eq('user_id', userId);
       const { error } = await supabase.from('user_roles').insert([{ user_id: userId, role }]);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_roles'] });
-      showSuccess('Role assigned successfully');
+      showAlert('success', t('roleAssignedSuccess'));
       setIsRoleDialogOpen(false);
     },
-    onError: () => showError('Failed to assign role'),
+    onError: () => showAlert('error', t('failedToAssignRole')),
   });
 
   const removeRoleMutation = useMutation({
@@ -146,10 +168,10 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_roles'] });
-      showSuccess('Role removed successfully');
+      showAlert('success', t('roleRemovedSuccess'));
       setIsDeleteDialogOpen(false);
     },
-    onError: () => showError('Failed to remove role'),
+    onError: () => showAlert('error', t('failedToRemoveRole')),
   });
 
   const getUserRole = (userId: string) => {
@@ -161,11 +183,25 @@ export default function Settings() {
     createUserMutation.mutate({ email: newUserEmail, password: newUserPassword, name: newUserName });
   };
 
+  const handleEditUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedUserId) {
+      updateProfileMutation.mutate({ userId: selectedUserId, fullName: editUserName });
+    }
+  };
+
   const handleAssignRole = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedUserId) {
       assignRoleMutation.mutate({ userId: selectedUserId, role: selectedRole });
     }
+  };
+
+  const openEditDialog = (profile: Profile) => {
+    setSelectedUserId(profile.id);
+    setEditUserName(profile.full_name || '');
+    setEditUserEmail(profile.email || '');
+    setIsEditUserDialogOpen(true);
   };
 
   const openRoleDialog = (userId: string) => {
@@ -174,7 +210,7 @@ export default function Settings() {
     setIsRoleDialogOpen(true);
   };
 
-  const openDeleteDialog = (userId: string) => {
+  const openDeleteRoleDialog = (userId: string) => {
     setSelectedUserId(userId);
     setIsDeleteDialogOpen(true);
   };
@@ -182,28 +218,24 @@ export default function Settings() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Success/Error Messages */}
-        {successMessage && (
-          <div className="fixed top-4 right-4 z-50 bg-primary text-primary-foreground px-4 py-3 rounded-lg shadow-lg animate-in fade-in slide-in-from-top-2">
-            {successMessage}
-          </div>
-        )}
-        {errorMessage && (
-          <div className="fixed top-4 right-4 z-50 bg-destructive text-destructive-foreground px-4 py-3 rounded-lg shadow-lg animate-in fade-in slide-in-from-top-2">
-            {errorMessage}
-          </div>
-        )}
+        {/* Alert Modal */}
+        <AlertModal
+          open={alertModal.open}
+          onOpenChange={(open) => setAlertModal({ ...alertModal, open })}
+          type={alertModal.type}
+          message={alertModal.message}
+        />
 
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('settings')}</h1>
-          <p className="text-muted-foreground">Manage users, permissions, and preferences</p>
+          <p className="text-muted-foreground">{t('manageUsersPermsSettings')}</p>
         </div>
 
         <Tabs defaultValue="users" className="space-y-4">
           <TabsList>
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
-              Users
+              {t('users')}
             </TabsTrigger>
             <TabsTrigger value="permissions" className="gap-2">
               <Shield className="h-4 w-4" />
@@ -217,20 +249,20 @@ export default function Settings() {
 
           <TabsContent value="users" className="space-y-4">
             <div className="flex justify-end">
-              <Button onClick={() => setIsUserDialogOpen(true)} className="hover-loading">
+              <Button onClick={() => setIsUserDialogOpen(true)} className="hover-gradient">
                 <UserPlus className="h-4 w-4 mr-2" />
-                Create User
+                {t('createUser')}
               </Button>
             </div>
 
-            <div className="bg-card rounded-lg border border-border">
+            <div className="bg-card rounded-lg border border-border card-gradient-border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead className="w-24">Actions</TableHead>
+                    <TableHead>{t('user')}</TableHead>
+                    <TableHead>{t('role')}</TableHead>
+                    <TableHead>{t('joined')}</TableHead>
+                    <TableHead className="w-32">{t('actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -243,7 +275,7 @@ export default function Settings() {
                   ) : profiles?.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                        No users found
+                        {t('noUsersFound')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -251,7 +283,7 @@ export default function Settings() {
                       <TableRow key={profile.id}>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{profile.full_name || 'No name'}</div>
+                            <div className="font-medium">{profile.full_name || t('noName')}</div>
                             <div className="text-sm text-muted-foreground">{profile.email}</div>
                           </div>
                         </TableCell>
@@ -261,7 +293,7 @@ export default function Settings() {
                               {t(getUserRole(profile.id) || '')}
                             </Badge>
                           ) : (
-                            <span className="text-muted-foreground text-sm">No role</span>
+                            <span className="text-muted-foreground text-sm">{t('noRole')}</span>
                           )}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
@@ -269,15 +301,34 @@ export default function Settings() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" onClick={() => openRoleDialog(profile.id)} className="hover-loading">
+                            {/* Edit Button */}
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={() => openEditDialog(profile)} 
+                              className="hover-gradient"
+                              title={t('edit')}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            {/* Assign Role Button */}
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={() => openRoleDialog(profile.id)} 
+                              className="hover-gradient"
+                              title={t('assignRole')}
+                            >
                               <Shield className="h-4 w-4" />
                             </Button>
+                            {/* Delete Role Button */}
                             {getUserRole(profile.id) && (
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="text-destructive hover-loading"
-                                onClick={() => openDeleteDialog(profile.id)}
+                                className="text-destructive hover-gradient"
+                                onClick={() => openDeleteRoleDialog(profile.id)}
+                                title={t('delete')}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -293,40 +344,40 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="permissions" className="space-y-4">
-            <div className="bg-card rounded-lg border border-border p-6">
-              <h3 className="text-lg font-semibold mb-4">Role Permissions</h3>
+            <div className="bg-card rounded-lg border border-border p-6 card-gradient-border">
+              <h3 className="text-lg font-semibold mb-4">{t('rolePermissions')}</h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-4 gap-4 text-sm font-medium text-muted-foreground border-b border-border pb-2">
-                  <div>Permission</div>
+                  <div>{t('permission')}</div>
                   <div className="text-center">{t('admin')}</div>
                   <div className="text-center">{t('manager')}</div>
                   <div className="text-center">{t('user')}</div>
                 </div>
                 {[
-                  { name: 'View Dashboard', admin: true, manager: true, user: false },
-                  { name: 'Manage Products', admin: true, manager: true, user: false },
-                  { name: 'Manage Categories', admin: true, manager: true, user: false },
-                  { name: 'Manage Orders', admin: true, manager: true, user: false },
-                  { name: 'Manage Customers', admin: true, manager: false, user: false },
-                  { name: 'Manage Users', admin: true, manager: false, user: false },
-                  { name: 'Manage Settings', admin: true, manager: false, user: false },
-                  { name: 'Send Notifications', admin: true, manager: true, user: false },
+                  { name: t('viewDashboard'), admin: true, manager: true, user: false },
+                  { name: t('manageProducts'), admin: true, manager: true, user: false },
+                  { name: t('manageCategories'), admin: true, manager: true, user: false },
+                  { name: t('manageOrders'), admin: true, manager: true, user: false },
+                  { name: t('manageCustomers'), admin: true, manager: false, user: false },
+                  { name: t('manageUsers'), admin: true, manager: false, user: false },
+                  { name: t('manageSettings'), admin: true, manager: false, user: false },
+                  { name: t('sendNotifications'), admin: true, manager: true, user: false },
                 ].map((perm) => (
                   <div key={perm.name} className="grid grid-cols-4 gap-4 py-2 border-b border-border last:border-0">
                     <div className="text-sm">{perm.name}</div>
                     <div className="text-center">
                       <Badge variant={perm.admin ? 'default' : 'outline'} className="text-xs">
-                        {perm.admin ? 'Yes' : 'No'}
+                        {perm.admin ? t('yes') : t('no')}
                       </Badge>
                     </div>
                     <div className="text-center">
                       <Badge variant={perm.manager ? 'default' : 'outline'} className="text-xs">
-                        {perm.manager ? 'Yes' : 'No'}
+                        {perm.manager ? t('yes') : t('no')}
                       </Badge>
                     </div>
                     <div className="text-center">
                       <Badge variant={perm.user ? 'default' : 'outline'} className="text-xs">
-                        {perm.user ? 'Yes' : 'No'}
+                        {perm.user ? t('yes') : t('no')}
                       </Badge>
                     </div>
                   </div>
@@ -336,7 +387,7 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="general" className="space-y-4">
-            <div className="bg-card rounded-lg border border-border p-6">
+            <div className="bg-card rounded-lg border border-border p-6 card-gradient-border">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Globe className="h-5 w-5" />
                 {t('language')}
@@ -346,22 +397,20 @@ export default function Settings() {
                   <Button
                     variant={language === 'en' ? 'default' : 'outline'}
                     onClick={() => setLanguage('en')}
-                    className="hover-loading"
+                    className="hover-gradient"
                   >
-                    🇺🇸 English (Nunito)
+                    🇺🇸 {t('english')} (Nunito)
                   </Button>
                   <Button
                     variant={language === 'km' ? 'default' : 'outline'}
                     onClick={() => setLanguage('km')}
-                    className="hover-loading"
+                    className="hover-gradient"
                   >
-                    🇰🇭 ភាសាខ្មែរ (Kantumruy Pro)
+                    🇰🇭 {t('khmer')} (Kantumruy Pro)
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {language === 'en' 
-                    ? 'Select your preferred language. The app will update automatically.'
-                    : 'ជ្រើសរើសភាសាដែលអ្នកពេញចិត្ត។ កម្មវិធីនឹងធ្វើបច្ចុប្បន្នភាពដោយស្វ័យប្រវត្តិ។'}
+                  {t('selectLanguageDesc')}
                 </p>
               </div>
             </div>
@@ -372,49 +421,79 @@ export default function Settings() {
         <Modal open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
           <ModalContent>
             <ModalHeader>
-              <ModalTitle>Create New User</ModalTitle>
-              <ModalDescription>Add a new user to the system</ModalDescription>
+              <ModalTitle>{t('createUser')}</ModalTitle>
+              <ModalDescription>{t('addNewUserDesc')}</ModalDescription>
             </ModalHeader>
             <form onSubmit={handleCreateUser} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">{t('fullName')}</Label>
                 <Input
                   id="name"
                   value={newUserName}
                   onChange={(e) => setNewUserName(e.target.value)}
-                  className="hover-input"
+                  className="hover-gradient-input"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('email')}</Label>
                 <Input
                   id="email"
                   type="email"
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
-                  className="hover-input"
+                  className="hover-gradient-input"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('password')}</Label>
                 <Input
                   id="password"
                   type="password"
                   value={newUserPassword}
                   onChange={(e) => setNewUserPassword(e.target.value)}
-                  className="hover-input"
+                  className="hover-gradient-input"
                   minLength={6}
                   required
                 />
               </div>
               <ModalFooter>
-                <Button type="button" variant="outline" onClick={() => setIsUserDialogOpen(false)} className="hover-loading">
+                <Button type="button" variant="outline" onClick={() => setIsUserDialogOpen(false)} className="hover-gradient">
                   {t('cancel')}
                 </Button>
-                <Button type="submit" disabled={createUserMutation.isPending} className="hover-loading">
-                  {createUserMutation.isPending ? t('loading') : 'Create User'}
+                <Button type="submit" disabled={createUserMutation.isPending} className="hover-gradient">
+                  {createUserMutation.isPending ? t('loading') : t('createUser')}
+                </Button>
+              </ModalFooter>
+            </form>
+          </ModalContent>
+        </Modal>
+
+        {/* Edit User Modal */}
+        <Modal open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
+          <ModalContent>
+            <ModalHeader>
+              <ModalTitle>{t('edit')} {t('user')}</ModalTitle>
+              <ModalDescription>{t('email')}: {editUserEmail}</ModalDescription>
+            </ModalHeader>
+            <form onSubmit={handleEditUser} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">{t('fullName')}</Label>
+                <Input
+                  id="edit-name"
+                  value={editUserName}
+                  onChange={(e) => setEditUserName(e.target.value)}
+                  className="hover-gradient-input"
+                  required
+                />
+              </div>
+              <ModalFooter>
+                <Button type="button" variant="outline" onClick={() => setIsEditUserDialogOpen(false)} className="hover-gradient">
+                  {t('cancel')}
+                </Button>
+                <Button type="submit" disabled={updateProfileMutation.isPending} className="hover-gradient">
+                  {updateProfileMutation.isPending ? t('loading') : t('save')}
                 </Button>
               </ModalFooter>
             </form>
@@ -426,13 +505,13 @@ export default function Settings() {
           <ModalContent>
             <ModalHeader>
               <ModalTitle>{t('assignRole')}</ModalTitle>
-              <ModalDescription>Select a role for this user</ModalDescription>
+              <ModalDescription>{t('selectRoleDesc')}</ModalDescription>
             </ModalHeader>
             <form onSubmit={handleAssignRole} className="space-y-4">
               <div className="space-y-2">
-                <Label>Role</Label>
+                <Label>{t('role')}</Label>
                 <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as RoleType)}>
-                  <SelectTrigger className="hover-input">
+                  <SelectTrigger className="hover-gradient-input">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -443,10 +522,10 @@ export default function Settings() {
                 </Select>
               </div>
               <ModalFooter>
-                <Button type="button" variant="outline" onClick={() => setIsRoleDialogOpen(false)} className="hover-loading">
+                <Button type="button" variant="outline" onClick={() => setIsRoleDialogOpen(false)} className="hover-gradient">
                   {t('cancel')}
                 </Button>
-                <Button type="submit" className="hover-loading">
+                <Button type="submit" className="hover-gradient">
                   {t('assignRole')}
                 </Button>
               </ModalFooter>
@@ -454,21 +533,21 @@ export default function Settings() {
           </ModalContent>
         </Modal>
 
-        {/* Delete Confirmation Modal */}
+        {/* Delete Role Confirmation Modal */}
         <Modal open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <ModalContent>
             <ModalHeader>
               <ModalTitle>{t('confirm')} {t('delete')}</ModalTitle>
-              <ModalDescription>Are you sure you want to remove this role? This action cannot be undone.</ModalDescription>
+              <ModalDescription>{t('confirmDeleteRole')}</ModalDescription>
             </ModalHeader>
             <ModalFooter>
-              <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)} className="hover-loading">
+              <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)} className="hover-gradient">
                 {t('cancel')}
               </Button>
               <Button
                 variant="destructive"
                 onClick={() => selectedUserId && removeRoleMutation.mutate(selectedUserId)}
-                className="hover-loading"
+                className="hover-gradient"
               >
                 {t('delete')}
               </Button>
