@@ -8,8 +8,13 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Categories from "./pages/Categories";
+import Brands from "./pages/Brands";
 import Orders from "./pages/Orders";
 import Customers from "./pages/Customers";
+import Promotions from "./pages/Promotions";
+import Events from "./pages/Events";
+import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -27,8 +32,13 @@ const App = () => (
               <Route path="/" element={<Dashboard />} />
               <Route path="/products" element={<Products />} />
               <Route path="/categories" element={<Categories />} />
+              <Route path="/brands" element={<Brands />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/customers" element={<Customers />} />
+              <Route path="/promotions" element={<Promotions />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

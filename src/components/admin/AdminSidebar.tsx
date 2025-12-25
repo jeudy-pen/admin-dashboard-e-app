@@ -10,7 +10,11 @@ import {
   Moon,
   Sun,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Tag,
+  Percent,
+  Calendar,
+  Bell
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -22,8 +26,13 @@ const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/products', icon: Package, label: 'Products' },
   { path: '/categories', icon: FolderOpen, label: 'Categories' },
+  { path: '/brands', icon: Tag, label: 'Brands' },
   { path: '/orders', icon: ShoppingCart, label: 'Orders' },
   { path: '/customers', icon: Users, label: 'Customers' },
+  { path: '/promotions', icon: Percent, label: 'Promotions' },
+  { path: '/events', icon: Calendar, label: 'Events' },
+  { path: '/notifications', icon: Bell, label: 'Notifications' },
+  { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function AdminSidebar() {
