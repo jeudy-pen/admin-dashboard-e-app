@@ -156,5 +156,71 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Nunito', sans-serif;
+  }
+}
+
+/* Hover border loading styles for buttons and inputs */
+@layer components {
+  .hover-loading {
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+  
+  .hover-loading::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--primary) / 0.2),
+      transparent
+    );
+    animation: shimmer 2s infinite;
+  }
+  
+  .hover-loading:hover::before {
+    @apply opacity-100;
+  }
+  
+  .hover-loading:hover {
+    @apply ring-2 ring-primary/50 ring-offset-2 ring-offset-background;
+  }
+  
+  .hover-input {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-input:hover {
+    @apply ring-2 ring-primary/30 border-primary/50;
+  }
+  
+  .hover-input:focus {
+    @apply ring-2 ring-primary border-primary;
+  }
+  
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  /* Loading button state */
+  .btn-loading {
+    @apply relative pointer-events-none;
+  }
+  
+  .btn-loading::after {
+    content: '';
+    @apply absolute inset-0 rounded-md;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--primary-foreground) / 0.3),
+      transparent
+    );
+    animation: shimmer 1.5s infinite;
   }
 }

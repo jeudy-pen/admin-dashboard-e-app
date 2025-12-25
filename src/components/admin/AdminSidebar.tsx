@@ -18,28 +18,30 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-
-const navItems = [
-  { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/products', icon: Package, label: 'Products' },
-  { path: '/categories', icon: FolderOpen, label: 'Categories' },
-  { path: '/brands', icon: Tag, label: 'Brands' },
-  { path: '/orders', icon: ShoppingCart, label: 'Orders' },
-  { path: '/customers', icon: Users, label: 'Customers' },
-  { path: '/promotions', icon: Percent, label: 'Promotions' },
-  { path: '/events', icon: Calendar, label: 'Events' },
-  { path: '/notifications', icon: Bell, label: 'Notifications' },
-  { path: '/settings', icon: Settings, label: 'Settings' },
-];
 
 export default function AdminSidebar() {
   const location = useLocation();
   const { signOut, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
+
+  const navItems = [
+    { path: '/', icon: LayoutDashboard, label: t('dashboard') },
+    { path: '/products', icon: Package, label: t('products') },
+    { path: '/categories', icon: FolderOpen, label: t('categories') },
+    { path: '/brands', icon: Tag, label: t('brands') },
+    { path: '/orders', icon: ShoppingCart, label: t('orders') },
+    { path: '/customers', icon: Users, label: t('customers') },
+    { path: '/promotions', icon: Percent, label: t('promotions') },
+    { path: '/events', icon: Calendar, label: t('events') },
+    { path: '/notifications', icon: Bell, label: t('notifications') },
+    { path: '/settings', icon: Settings, label: t('settings') },
+  ];
 
   return (
     <aside className={cn(
@@ -55,7 +57,7 @@ export default function AdminSidebar() {
           variant="ghost"
           size="icon"
           onClick={() => setCollapsed(!collapsed)}
-          className="h-8 w-8"
+          className="h-8 w-8 hover-loading"
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
@@ -87,7 +89,7 @@ export default function AdminSidebar() {
           variant="ghost"
           onClick={toggleTheme}
           className={cn(
-            "w-full justify-start gap-3",
+            "w-full justify-start gap-3 hover-loading",
             collapsed && "justify-center px-0"
           )}
         >
@@ -96,19 +98,19 @@ export default function AdminSidebar() {
           ) : (
             <Moon className="h-5 w-5" />
           )}
-          {!collapsed && <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
+          {!collapsed && <span>{theme === 'dark' ? 'Light Mode' : t('darkMode')}</span>}
         </Button>
 
         <Button
           variant="ghost"
           onClick={signOut}
           className={cn(
-            "w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10",
+            "w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10 hover-loading",
             collapsed && "justify-center px-0"
           )}
         >
           <LogOut className="h-5 w-5" />
-          {!collapsed && <span>Sign Out</span>}
+          {!collapsed && <span>{t('logout')}</span>}
         </Button>
       </div>
     </aside>
