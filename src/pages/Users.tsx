@@ -11,7 +11,25 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Loading } from '@/components/ui/loading';
+import { Button } from '@/components/ui/button';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalFooter,
+  ModalDescription,
+} from '@/components/ui/modal';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from '@/hooks/use-toast';
 
 interface UserWithRole {
   id: string;
@@ -26,6 +44,10 @@ export default function Users() {
   const { t } = useLanguage();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
+  const [deletingUser, setDeletingUser] = useState<UserWithRole | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string>('');
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -35,7 +57,6 @@ export default function Users() {
     try {
       setLoading(true);
       
-      // Fetch profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -43,14 +64,12 @@ export default function Users() {
 
       if (profilesError) throw profilesError;
 
-      // Fetch user roles
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('*');
 
       if (rolesError) throw rolesError;
 
-      // Combine profiles with roles
       const usersWithRoles: UserWithRole[] = (profiles || []).map((profile) => {
         const userRole = roles?.find((r) => r.user_id === profile.id);
         return {
@@ -68,6 +87,88 @@ export default function Users() {
       console.error('Error fetching users:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditClick = (user: UserWithRole) => {
+    setEditingUser(user);
+    setSelectedRole(user.role || '');
+  };
+
+  const handleUpdateRole = async () => {
+    if (!editingUser) return;
+    
+    setActionLoading(true);
+    try {
+      if (editingUser.role) {
+        await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', editingUser.id);
+      }
+
+      if (selectedRole) {
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({ user_id: editingUser.id, role: selectedRole as 'admin' | 'manager' | 'user' });
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: t('success'),
+        description: t('roleAssignedSuccess'),
+      });
+      
+      setEditingUser(null);
+      fetchUsers();
+    } catch (error) {
+      console.error('Error updating role:', error);
+      toast({
+        title: t('error'),
+        description: t('failedToAssignRole'),
+        variant: 'destructive',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deletingUser) return;
+    
+    setActionLoading(true);
+    try {
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', deletingUser.id);
+
+      if (roleError) throw roleError;
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', deletingUser.id);
+
+      if (profileError) throw profileError;
+
+      toast({
+        title: t('success'),
+        description: t('userDeletedSuccess'),
+      });
+      
+      setDeletingUser(null);
+      fetchUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: t('error'),
+        description: t('failedToDeleteUser'),
+        variant: 'destructive',
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -94,12 +195,13 @@ export default function Users() {
                   <TableHead>{t('phoneNumber')}</TableHead>
                   <TableHead>{t('role')}</TableHead>
                   <TableHead>{t('createdAt')}</TableHead>
+                  <TableHead className="w-24">{t('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       {t('noUsersFound')}
                     </TableCell>
                   </TableRow>
@@ -125,6 +227,26 @@ export default function Users() {
                       <TableCell>
                         {format(new Date(user.created_at), 'dd/MM/yyyy HH:mm')}
                       </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditClick(user)}
+                            className="h-8 w-8"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeletingUser(user)}
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -133,6 +255,54 @@ export default function Users() {
           </div>
         )}
       </div>
+
+      {/* Edit Role Modal */}
+      <Modal open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>{t('assignRole')}</ModalTitle>
+            <ModalDescription>{t('selectRoleDesc')}</ModalDescription>
+          </ModalHeader>
+          <div className="p-4">
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <SelectTrigger>
+                <SelectValue placeholder={t('role')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">{t('admin')}</SelectItem>
+                <SelectItem value="manager">{t('manager')}</SelectItem>
+                <SelectItem value="user">{t('user')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <ModalFooter>
+            <Button variant="outline" onClick={() => setEditingUser(null)}>
+              {t('cancel')}
+            </Button>
+            <Button onClick={handleUpdateRole} disabled={actionLoading}>
+              {actionLoading ? <Loading size="sm" /> : t('save')}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal open={!!deletingUser} onOpenChange={() => setDeletingUser(null)}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>{t('delete')}</ModalTitle>
+            <ModalDescription>{t('confirmDeleteUser')}</ModalDescription>
+          </ModalHeader>
+          <ModalFooter>
+            <Button variant="outline" onClick={() => setDeletingUser(null)}>
+              {t('no')}
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteUser} disabled={actionLoading}>
+              {actionLoading ? <Loading size="sm" /> : t('yes')}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </AdminLayout>
   );
 }

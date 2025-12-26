@@ -95,6 +95,9 @@ export const translations: Translations = {
   addNewUserDesc: { en: 'Add a new user to the system', km: 'បន្ថែមអ្នកប្រើប្រាស់ថ្មីទៅប្រព័ន្ធ' },
   selectRoleDesc: { en: 'Select a role for this user', km: 'ជ្រើសរើសតួនាទីសម្រាប់អ្នកប្រើប្រាស់នេះ' },
   confirmDeleteRole: { en: 'Are you sure you want to remove this role? This action cannot be undone.', km: 'តើអ្នកប្រាកដជាចង់លុបតួនាទីនេះមែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។' },
+  confirmDeleteUser: { en: 'Are you sure you want to delete this user? This action cannot be undone.', km: 'តើអ្នកប្រាកដជាចង់លុបអ្នកប្រើប្រាស់នេះមែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។' },
+  userDeletedSuccess: { en: 'User deleted successfully', km: 'លុបអ្នកប្រើប្រាស់ជោគជ័យ' },
+  failedToDeleteUser: { en: 'Failed to delete user', km: 'បរាជ័យក្នុងការលុបអ្នកប្រើប្រាស់' },
   
   // Permissions
   rolePermissions: { en: 'Role Permissions', km: 'សិទ្ធិតួនាទី' },
