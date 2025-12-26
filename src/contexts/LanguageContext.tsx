@@ -69,6 +69,10 @@ export const translations: Translations = {
   role: { en: 'Role', km: 'តួនាទី' },
   joined: { en: 'Joined', km: 'ចូលរួម' },
   actions: { en: 'Actions', km: 'សកម្មភាព' },
+  userId: { en: 'User ID', km: 'លេខសម្គាល់អ្នកប្រើ' },
+  username: { en: 'Username', km: 'ឈ្មោះអ្នកប្រើ' },
+  phoneNumber: { en: 'Phone Number', km: 'លេខទូរស័ព្ទ' },
+  createdAt: { en: 'Created At', km: 'បង្កើតនៅ' },
   
   // Chat
   chatWithUs: { en: 'Chat with us', km: 'ជជែកជាមួយយើង' },

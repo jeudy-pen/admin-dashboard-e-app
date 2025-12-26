@@ -14,23 +14,42 @@ export function Loading({ size = "md", className }: LoadingProps) {
 
   return (
     <div className={cn("relative", sizeClasses[size], className)}>
-      <div
-        className="absolute inset-0 rounded-full"
-        style={{
-          background: `conic-gradient(
-            from 0deg,
-            hsl(0 84% 60%),
-            hsl(25 95% 53%),
-            hsl(45 93% 47%),
-            hsl(142 71% 45%),
-            hsl(199 89% 48%),
-            hsl(262 83% 58%),
-            hsl(0 84% 60%)
-          )`,
-          animation: "spin 1s linear infinite",
-        }}
-      />
-      <div className="absolute inset-[2px] rounded-full bg-background" />
+      <svg className="w-full h-full animate-spin" viewBox="0 0 100 100">
+        {/* Top arc - 35% gap */}
+        <circle
+          cx="50"
+          cy="50"
+          r="45"
+          fill="none"
+          stroke="url(#gradient1)"
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeDasharray="70.7 212.1"
+          strokeDashoffset="0"
+        />
+        {/* Bottom arc - 35% gap */}
+        <circle
+          cx="50"
+          cy="50"
+          r="45"
+          fill="none"
+          stroke="url(#gradient2)"
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeDasharray="70.7 212.1"
+          strokeDashoffset="-141.4"
+        />
+        <defs>
+          <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="hsl(var(--primary))" />
+            <stop offset="100%" stopColor="hsl(var(--primary) / 0.5)" />
+          </linearGradient>
+          <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="hsl(var(--primary) / 0.5)" />
+            <stop offset="100%" stopColor="hsl(var(--primary))" />
+          </linearGradient>
+        </defs>
+      </svg>
     </div>
   );
 }
