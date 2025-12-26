@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Customer {
   customer_name: string;
@@ -17,6 +18,7 @@ interface Customer {
 }
 
 export default function Customers() {
+  const { t } = useLanguage();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,13 +28,11 @@ export default function Customers() {
   }, []);
 
   const fetchCustomers = async () => {
-    const { data } = await supabase
-      .from('orders')
-      .select('customer_name, customer_email, customer_phone, city, country, total');
+    const { data } = await supabase.from('orders').select('customer_name, customer_email, customer_phone, city, country, total');
 
     if (data) {
       const customerMap = new Map<string, Customer>();
-      
+
       data.forEach((order) => {
         const existing = customerMap.get(order.customer_email);
         if (existing) {
@@ -46,7 +46,7 @@ export default function Customers() {
             city: order.city || '',
             country: order.country || '',
             order_count: 1,
-            total_spent: Number(order.total)
+            total_spent: Number(order.total),
           });
         }
       });
@@ -56,24 +56,23 @@ export default function Customers() {
     setLoading(false);
   };
 
-  const filteredCustomers = customers.filter(c =>
-    c.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.customer_email.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCustomers = customers.filter(
+    (c) => c.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) || c.customer_email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Customers</h1>
-          <p className="text-muted-foreground">View customer information from orders</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('customers')}</h1>
+          <p className="text-muted-foreground">{t('customersSubtitle')}</p>
         </div>
 
         <div className="flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search customers..."
+              placeholder={t('searchCustomers')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -88,7 +87,7 @@ export default function Customers() {
         ) : filteredCustomers.length === 0 ? (
           <div className="text-center py-12 bg-card rounded-xl border border-border">
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No customers found</p>
+            <p className="text-muted-foreground">{t('noCustomersFound')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -104,14 +103,12 @@ export default function Customers() {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-lg font-semibold text-primary">
-                          {customer.customer_name.charAt(0).toUpperCase()}
-                        </span>
+                        <span className="text-lg font-semibold text-primary">{customer.customer_name.charAt(0).toUpperCase()}</span>
                       </div>
                       <div>
                         <h3 className="font-semibold text-foreground">{customer.customer_name}</h3>
                         <Badge variant="outline" className="text-xs">
-                          {customer.order_count} order{customer.order_count !== 1 ? 's' : ''}
+                          {customer.order_count} {t('orders')}
                         </Badge>
                       </div>
                     </div>
@@ -138,7 +135,7 @@ export default function Customers() {
 
                   <div className="mt-4 pt-4 border-t border-border">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Total Spent</span>
+                      <span className="text-sm text-muted-foreground">{t('totalSpent')}</span>
                       <span className="font-bold text-primary">${customer.total_spent.toFixed(2)}</span>
                     </div>
                   </div>

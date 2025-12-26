@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Bell, Search, Globe, Languages } from 'lucide-react';
+import { Bell, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,9 +27,7 @@ interface Notification {
 
 export default function AdminHeader() {
   const { language, setLanguage, t } = useLanguage();
-  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -51,66 +47,29 @@ export default function AdminHeader() {
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
-
   return (
     <header className="sticky top-0 z-40 bg-card border-b border-border px-6 py-3">
-      <div className="flex items-center justify-between gap-4">
-        {/* Search */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={t('search')}
-              className="pl-10 hover-gradient-input"
-            />
-          </div>
-        </form>
-
+      <div className="flex items-center justify-end gap-4">
         <div className="flex items-center gap-2">
-          {/* Language Switcher with Icon and Text */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="hover-gradient gap-2">
                 <Languages className="h-5 w-5" />
-                <span className="hidden sm:inline">
-                  {language === 'en' ? 'EN' : 'ខ្មែរ'}
-                </span>
+                <span className="hidden sm:inline">{language === 'en' ? 'EN' : 'ខ្មែរ'}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => setLanguage('en')}
-                className={cn(language === 'en' && 'bg-accent')}
-              >
+              <DropdownMenuItem onClick={() => setLanguage('en')} className={cn(language === 'en' && 'bg-accent')}>
                 <span className="mr-2">🇺🇸</span>
                 {t('english')} (Nunito)
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setLanguage('km')}
-                className={cn(language === 'km' && 'bg-accent')}
-              >
+              <DropdownMenuItem onClick={() => setLanguage('km')} className={cn(language === 'km' && 'bg-accent')}>
                 <span className="mr-2">🇰🇭</span>
                 {t('khmer')} (Kantumruy Pro)
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Notifications */}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="relative hover-gradient">
@@ -141,9 +100,7 @@ export default function AdminHeader() {
                         )}
                       >
                         <p className="font-medium text-sm">{notification.title}</p>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          {notification.message}
-                        </p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
                       </div>
                     ))}
                   </div>

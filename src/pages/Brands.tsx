@@ -23,6 +23,7 @@ import {
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Brand {
   id: string;
@@ -32,6 +33,7 @@ interface Brand {
 }
 
 export default function Brands() {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   const [formData, setFormData] = useState({ name: '', logo: '' });
@@ -40,10 +42,7 @@ export default function Brands() {
   const { data: brands, isLoading } = useQuery({
     queryKey: ['brands'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('brands')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('brands').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       return data as Brand[];
     },
@@ -56,10 +55,10 @@ export default function Brands() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
-      toast.success('Brand created successfully');
+      toast.success(t('brandCreatedSuccess'));
       resetForm();
     },
-    onError: () => toast.error('Failed to create brand'),
+    onError: () => toast.error(t('failedToCreateBrand')),
   });
 
   const updateMutation = useMutation({
@@ -69,10 +68,10 @@ export default function Brands() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
-      toast.success('Brand updated successfully');
+      toast.success(t('brandUpdatedSuccess'));
       resetForm();
     },
-    onError: () => toast.error('Failed to update brand'),
+    onError: () => toast.error(t('failedToUpdateBrand')),
   });
 
   const deleteMutation = useMutation({
@@ -82,9 +81,9 @@ export default function Brands() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
-      toast.success('Brand deleted successfully');
+      toast.success(t('brandDeletedSuccess'));
     },
-    onError: () => toast.error('Failed to delete brand'),
+    onError: () => toast.error(t('failedToDeleteBrand')),
   });
 
   const resetForm = () => {
@@ -114,23 +113,23 @@ export default function Brands() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Brands</h1>
-            <p className="text-muted-foreground">Manage product brands</p>
+            <h1 className="text-2xl font-bold text-foreground">{t('brands')}</h1>
+            <p className="text-muted-foreground">{t('brandsSubtitle')}</p>
           </div>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => resetForm()}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Brand
+                {t('addBrand')}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{editingBrand ? 'Edit Brand' : 'Add Brand'}</DialogTitle>
+                <DialogTitle>{editingBrand ? t('editBrand') : t('addBrand')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Brand Name</Label>
+                  <Label htmlFor="name">{t('brandName')}</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -139,7 +138,7 @@ export default function Brands() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="logo">Logo URL</Label>
+                  <Label htmlFor="logo">{t('logoUrl')}</Label>
                   <Input
                     id="logo"
                     value={formData.logo}
@@ -149,11 +148,9 @@ export default function Brands() {
                 </div>
                 <div className="flex gap-2 justify-end">
                   <Button type="button" variant="outline" onClick={resetForm}>
-                    Cancel
+                    {t('cancel')}
                   </Button>
-                  <Button type="submit">
-                    {editingBrand ? 'Update' : 'Create'}
-                  </Button>
+                  <Button type="submit">{editingBrand ? t('update') : t('create')}</Button>
                 </div>
               </form>
             </DialogContent>
@@ -165,22 +162,22 @@ export default function Brands() {
             <TableHeader>
               <TableRow>
                 <TableHead>Logo</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="w-24">Actions</TableHead>
+                <TableHead>{t('name')}</TableHead>
+                <TableHead>{t('created')}</TableHead>
+                <TableHead className="w-24">{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                    Loading...
+                    {t('loading')}
                   </TableCell>
                 </TableRow>
               ) : brands?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                    No brands found
+                    {t('noBrandsFound')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -188,15 +185,13 @@ export default function Brands() {
                   <TableRow key={brand.id}>
                     <TableCell>
                       {brand.logo ? (
-                        <img src={brand.logo} alt={brand.name} className="h-8 w-8 rounded object-cover" />
+                        <img src={brand.logo} alt={brand.name} className="h-8 w-8 rounded object-cover" loading="lazy" />
                       ) : (
                         <div className="h-8 w-8 rounded bg-muted" />
                       )}
                     </TableCell>
                     <TableCell className="font-medium">{brand.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {format(new Date(brand.created_at), 'MMM d, yyyy')}
-                    </TableCell>
+                    <TableCell className="text-muted-foreground">{format(new Date(brand.created_at), 'MMM d, yyyy')}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button size="icon" variant="ghost" onClick={() => handleEdit(brand)}>

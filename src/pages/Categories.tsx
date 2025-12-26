@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Category {
   id: string;
@@ -26,6 +27,7 @@ interface Category {
 }
 
 export default function Categories() {
+  const { t } = useLanguage();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,7 +37,7 @@ export default function Categories() {
     name: '',
     name_kh: '',
     description: '',
-    image_url: ''
+    image_url: '',
   });
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -45,11 +47,7 @@ export default function Categories() {
   }, []);
 
   const fetchCategories = async () => {
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .order('created_at', { ascending: false });
-
+    const { data, error } = await supabase.from('categories').select('*').order('created_at', { ascending: false });
     if (!error) setCategories(data || []);
     setLoading(false);
   };
@@ -62,23 +60,23 @@ export default function Categories() {
       name: formData.name,
       name_kh: formData.name_kh,
       description: formData.description,
-      image_url: formData.image_url
+      image_url: formData.image_url,
     };
 
     let error;
     if (editingCategory) {
-      ({ error } = await supabase
-        .from('categories')
-        .update(categoryData)
-        .eq('id', editingCategory.id));
+      ({ error } = await supabase.from('categories').update(categoryData).eq('id', editingCategory.id));
     } else {
       ({ error } = await supabase.from('categories').insert(categoryData));
     }
 
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Success', description: editingCategory ? 'Category updated' : 'Category created' });
+      toast({
+        title: t('success'),
+        description: editingCategory ? t('categoryUpdated') : t('categoryCreated'),
+      });
       setIsDialogOpen(false);
       resetForm();
       fetchCategories();
@@ -87,13 +85,13 @@ export default function Categories() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
+    if (!confirm(t('confirmDeleteCategory'))) return;
 
     const { error } = await supabase.from('categories').delete().eq('id', id);
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Deleted', description: 'Category has been deleted' });
+      toast({ title: t('deleted'), description: t('categoryDeleted') });
       fetchCategories();
     }
   };
@@ -104,7 +102,7 @@ export default function Categories() {
       name: category.name,
       name_kh: category.name_kh || '',
       description: category.description || '',
-      image_url: category.image_url || ''
+      image_url: category.image_url || '',
     });
     setIsDialogOpen(true);
   };
@@ -114,46 +112,43 @@ export default function Categories() {
     setFormData({ name: '', name_kh: '', description: '', image_url: '' });
   };
 
-  const filteredCategories = categories.filter(c =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCategories = categories.filter((c) => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Categories</h1>
-            <p className="text-muted-foreground">Manage product categories</p>
+            <h1 className="text-2xl font-bold text-foreground">{t('categories')}</h1>
+            <p className="text-muted-foreground">{t('categoriesSubtitle')}</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) resetForm();
+            }}
+          >
             <DialogTrigger asChild>
               <Button>
-                <Plus className="h-4 w-4 mr-2" /> Add Category
+                <Plus className="h-4 w-4 mr-2" /> {t('addCategory')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>{editingCategory ? 'Edit Category' : 'Add New Category'}</DialogTitle>
+                <DialogTitle>{editingCategory ? t('editCategory') : t('addNewCategory')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Name (English)</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
+                  <Label>{t('nameEnglish')}</Label>
+                  <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Name (Khmer)</Label>
-                  <Input
-                    value={formData.name_kh}
-                    onChange={(e) => setFormData({ ...formData, name_kh: e.target.value })}
-                  />
+                  <Label>{t('nameKhmer')}</Label>
+                  <Input value={formData.name_kh} onChange={(e) => setFormData({ ...formData, name_kh: e.target.value })} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Description</Label>
+                  <Label>{t('description')}</Label>
                   <Textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -161,7 +156,7 @@ export default function Categories() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Image URL</Label>
+                  <Label>{t('imageUrl')}</Label>
                   <Input
                     value={formData.image_url}
                     onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
@@ -170,7 +165,7 @@ export default function Categories() {
                 </div>
                 <Button type="submit" className="w-full" disabled={saving}>
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  {editingCategory ? 'Update Category' : 'Create Category'}
+                  {editingCategory ? t('update') : t('create')}
                 </Button>
               </form>
             </DialogContent>
@@ -181,7 +176,7 @@ export default function Categories() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search categories..."
+              placeholder={t('searchCategories')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -196,7 +191,7 @@ export default function Categories() {
         ) : filteredCategories.length === 0 ? (
           <div className="text-center py-12 bg-card rounded-xl border border-border">
             <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No categories found</p>
+            <p className="text-muted-foreground">{t('noCategoriesFound')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -215,6 +210,7 @@ export default function Categories() {
                         src={category.image_url}
                         alt={category.name}
                         className="h-16 w-16 rounded-lg object-cover"
+                        loading="lazy"
                       />
                     ) : (
                       <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -223,9 +219,7 @@ export default function Categories() {
                     )}
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-foreground truncate">{category.name}</h3>
-                      {category.name_kh && (
-                        <p className="text-sm text-muted-foreground">{category.name_kh}</p>
-                      )}
+                      {category.name_kh && <p className="text-sm text-muted-foreground">{category.name_kh}</p>}
                       {category.description && (
                         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{category.description}</p>
                       )}
@@ -233,10 +227,10 @@ export default function Categories() {
                   </div>
                   <div className="flex items-center justify-end gap-2 mt-4 pt-4 border-t border-border">
                     <Button variant="ghost" size="sm" onClick={() => openEditDialog(category)}>
-                      <Edit className="h-4 w-4 mr-1" /> Edit
+                      <Edit className="h-4 w-4 mr-1" /> {t('edit')}
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => handleDelete(category.id)}>
-                      <Trash2 className="h-4 w-4 mr-1 text-destructive" /> Delete
+                      <Trash2 className="h-4 w-4 mr-1 text-destructive" /> {t('delete')}
                     </Button>
                   </div>
                 </motion.div>
