@@ -17,6 +17,7 @@ import Events from "./pages/Events";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import Search from "./pages/Search";
+import Users from "./pages/Users";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -42,7 +43,7 @@ const App = () => (
                 <Route path="/events" element={<Events />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/settings" element={<Settings />} />
-                <Route path="/search" element={<Search />} />
+                <Route path="/users" element={<Users />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
