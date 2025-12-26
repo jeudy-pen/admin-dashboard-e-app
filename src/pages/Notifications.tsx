@@ -32,6 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Bell, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Notification {
   id: string;
@@ -53,6 +54,7 @@ const initialFormData = {
 };
 
 export default function Notifications() {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
   const [formData, setFormData] = useState(initialFormData);
@@ -61,10 +63,7 @@ export default function Notifications() {
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('push_notifications')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('push_notifications').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       return data as Notification[];
     },
@@ -77,10 +76,10 @@ export default function Notifications() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success('Notification created successfully');
+      toast.success(t('notificationCreatedSuccess'));
       resetForm();
     },
-    onError: () => toast.error('Failed to create notification'),
+    onError: () => toast.error(t('failedToCreateNotification')),
   });
 
   const updateMutation = useMutation({
@@ -90,10 +89,10 @@ export default function Notifications() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success('Notification updated successfully');
+      toast.success(t('notificationUpdatedSuccess'));
       resetForm();
     },
-    onError: () => toast.error('Failed to update notification'),
+    onError: () => toast.error(t('failedToUpdateNotification')),
   });
 
   const deleteMutation = useMutation({
@@ -103,9 +102,9 @@ export default function Notifications() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success('Notification deleted successfully');
+      toast.success(t('notificationDeletedSuccess'));
     },
-    onError: () => toast.error('Failed to delete notification'),
+    onError: () => toast.error(t('failedToDeleteNotification')),
   });
 
   const sendMutation = useMutation({
@@ -118,9 +117,9 @@ export default function Notifications() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success('Notification sent!');
+      toast.success(t('notificationSent'));
     },
-    onError: () => toast.error('Failed to send notification'),
+    onError: () => toast.error(t('failedToSendNotification')),
   });
 
   const resetForm = () => {
@@ -141,7 +140,7 @@ export default function Notifications() {
     if (editingNotification) {
       updateMutation.mutate({ id: editingNotification.id, ...data });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(data as any);
     }
   };
 
@@ -159,9 +158,12 @@ export default function Notifications() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'sent': return 'default';
-      case 'scheduled': return 'secondary';
-      default: return 'outline';
+      case 'sent':
+        return 'default';
+      case 'scheduled':
+        return 'secondary';
+      default:
+        return 'outline';
     }
   };
 
@@ -170,32 +172,27 @@ export default function Notifications() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Push Notifications</h1>
-            <p className="text-muted-foreground">Send notifications to users</p>
+            <h1 className="text-2xl font-bold text-foreground">{t('pushNotifications')}</h1>
+            <p className="text-muted-foreground">{t('notificationsSubtitle')}</p>
           </div>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => resetForm()}>
                 <Plus className="h-4 w-4 mr-2" />
-                New Notification
+                {t('newNotification')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>{editingNotification ? 'Edit Notification' : 'New Notification'}</DialogTitle>
+                <DialogTitle>{editingNotification ? t('editNotification') : t('newNotification')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                  />
+                  <Label htmlFor="title">{t('title')}</Label>
+                  <Input id="title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="message">Message</Label>
+                  <Label htmlFor="message">{t('message')}</Label>
                   <Textarea
                     id="message"
                     value={formData.message}
@@ -205,23 +202,20 @@ export default function Notifications() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Target Audience</Label>
-                  <Select
-                    value={formData.target_audience}
-                    onValueChange={(v) => setFormData({ ...formData, target_audience: v })}
-                  >
+                  <Label>{t('targetAudience')}</Label>
+                  <Select value={formData.target_audience} onValueChange={(v) => setFormData({ ...formData, target_audience: v })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Users</SelectItem>
-                      <SelectItem value="customers">Customers Only</SelectItem>
-                      <SelectItem value="admins">Admins Only</SelectItem>
+                      <SelectItem value="all">{t('allUsers')}</SelectItem>
+                      <SelectItem value="customers">{t('customersOnly')}</SelectItem>
+                      <SelectItem value="admins">{t('adminsOnly')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="scheduled_at">Schedule (Optional)</Label>
+                  <Label htmlFor="scheduled_at">{t('scheduleOptional')}</Label>
                   <Input
                     id="scheduled_at"
                     type="datetime-local"
@@ -231,11 +225,9 @@ export default function Notifications() {
                 </div>
                 <div className="flex gap-2 justify-end">
                   <Button type="button" variant="outline" onClick={resetForm}>
-                    Cancel
+                    {t('cancel')}
                   </Button>
-                  <Button type="submit">
-                    {editingNotification ? 'Update' : 'Create'}
-                  </Button>
+                  <Button type="submit">{editingNotification ? t('update') : t('create')}</Button>
                 </div>
               </form>
             </DialogContent>
@@ -246,24 +238,24 @@ export default function Notifications() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Notification</TableHead>
-                <TableHead>Audience</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="w-32">Actions</TableHead>
+                <TableHead>{t('notification')}</TableHead>
+                <TableHead>{t('audience')}</TableHead>
+                <TableHead>{t('status')}</TableHead>
+                <TableHead>{t('created')}</TableHead>
+                <TableHead className="w-32">{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    Loading...
+                    {t('loading')}
                   </TableCell>
                 </TableRow>
               ) : notifications?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    No notifications found
+                    {t('noNotificationsFound')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -280,38 +272,22 @@ export default function Notifications() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="capitalize text-muted-foreground">
-                      {notif.target_audience}
-                    </TableCell>
+                    <TableCell className="capitalize text-muted-foreground">{notif.target_audience}</TableCell>
                     <TableCell>
-                      <Badge variant={getStatusColor(notif.status)}>
-                        {notif.status}
-                      </Badge>
+                      <Badge variant={getStatusColor(notif.status)}>{notif.status}</Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {format(new Date(notif.created_at), 'MMM d, yyyy')}
-                    </TableCell>
+                    <TableCell className="text-muted-foreground">{format(new Date(notif.created_at), 'MMM d, yyyy')}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         {notif.status !== 'sent' && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="text-primary"
-                            onClick={() => sendMutation.mutate(notif.id)}
-                          >
+                          <Button size="icon" variant="ghost" className="text-primary" onClick={() => sendMutation.mutate(notif.id)}>
                             <Send className="h-4 w-4" />
                           </Button>
                         )}
                         <Button size="icon" variant="ghost" onClick={() => handleEdit(notif)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="text-destructive"
-                          onClick={() => deleteMutation.mutate(notif.id)}
-                        >
+                        <Button size="icon" variant="ghost" className="text-destructive" onClick={() => deleteMutation.mutate(notif.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

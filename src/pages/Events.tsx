@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Calendar, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Event {
   id: string;
@@ -48,6 +49,7 @@ const initialFormData = {
 };
 
 export default function Events() {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [formData, setFormData] = useState(initialFormData);
@@ -56,10 +58,7 @@ export default function Events() {
   const { data: events, isLoading } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('event_date', { ascending: true });
+      const { data, error } = await supabase.from('events').select('*').order('event_date', { ascending: true });
       if (error) throw error;
       return data as Event[];
     },
@@ -72,10 +71,10 @@ export default function Events() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      toast.success('Event created successfully');
+      toast.success(t('eventCreatedSuccess'));
       resetForm();
     },
-    onError: () => toast.error('Failed to create event'),
+    onError: () => toast.error(t('failedToCreateEvent')),
   });
 
   const updateMutation = useMutation({
@@ -85,10 +84,10 @@ export default function Events() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      toast.success('Event updated successfully');
+      toast.success(t('eventUpdatedSuccess'));
       resetForm();
     },
-    onError: () => toast.error('Failed to update event'),
+    onError: () => toast.error(t('failedToUpdateEvent')),
   });
 
   const deleteMutation = useMutation({
@@ -98,9 +97,9 @@ export default function Events() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      toast.success('Event deleted successfully');
+      toast.success(t('eventDeletedSuccess'));
     },
-    onError: () => toast.error('Failed to delete event'),
+    onError: () => toast.error(t('failedToDeleteEvent')),
   });
 
   const resetForm = () => {
@@ -122,7 +121,7 @@ export default function Events() {
     if (editingEvent) {
       updateMutation.mutate({ id: editingEvent.id, ...data });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(data as any);
     }
   };
 
@@ -144,32 +143,27 @@ export default function Events() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Events</h1>
-            <p className="text-muted-foreground">Manage upcoming events</p>
+            <h1 className="text-2xl font-bold text-foreground">{t('events')}</h1>
+            <p className="text-muted-foreground">{t('eventsSubtitle')}</p>
           </div>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => resetForm()}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Event
+                {t('addEvent')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>{editingEvent ? 'Edit Event' : 'Add Event'}</DialogTitle>
+                <DialogTitle>{editingEvent ? t('editEvent') : t('addEvent')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                  />
+                  <Label htmlFor="title">{t('title')}</Label>
+                  <Input id="title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">{t('description')}</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
@@ -178,7 +172,7 @@ export default function Events() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="event_date">Event Date & Time</Label>
+                  <Label htmlFor="event_date">{t('eventDateTime')}</Label>
                   <Input
                     id="event_date"
                     type="datetime-local"
@@ -188,15 +182,11 @@ export default function Events() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  />
+                  <Label htmlFor="location">{t('location')}</Label>
+                  <Input id="location" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="image_url">Image URL</Label>
+                  <Label htmlFor="image_url">{t('imageUrl')}</Label>
                   <Input
                     id="image_url"
                     value={formData.image_url}
@@ -210,15 +200,13 @@ export default function Events() {
                     checked={formData.is_published}
                     onCheckedChange={(c) => setFormData({ ...formData, is_published: c })}
                   />
-                  <Label htmlFor="is_published">Published</Label>
+                  <Label htmlFor="is_published">{t('published')}</Label>
                 </div>
                 <div className="flex gap-2 justify-end">
                   <Button type="button" variant="outline" onClick={resetForm}>
-                    Cancel
+                    {t('cancel')}
                   </Button>
-                  <Button type="submit">
-                    {editingEvent ? 'Update' : 'Create'}
-                  </Button>
+                  <Button type="submit">{editingEvent ? t('update') : t('create')}</Button>
                 </div>
               </form>
             </DialogContent>
@@ -229,24 +217,24 @@ export default function Events() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Event</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-24">Actions</TableHead>
+                <TableHead>{t('events')}</TableHead>
+                <TableHead>{t('createdAt')}</TableHead>
+                <TableHead>{t('location')}</TableHead>
+                <TableHead>{t('status')}</TableHead>
+                <TableHead className="w-24">{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    Loading...
+                    {t('loading')}
                   </TableCell>
                 </TableRow>
               ) : events?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    No events found
+                    {t('noEventsFound')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -255,7 +243,7 @@ export default function Events() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         {event.image_url ? (
-                          <img src={event.image_url} alt={event.title} className="h-10 w-10 rounded object-cover" />
+                          <img src={event.image_url} alt={event.title} className="h-10 w-10 rounded object-cover" loading="lazy" />
                         ) : (
                           <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
                             <Calendar className="h-5 w-5 text-muted-foreground" />
@@ -263,9 +251,7 @@ export default function Events() {
                         )}
                         <div>
                           <div className="font-medium">{event.title}</div>
-                          {event.description && (
-                            <div className="text-sm text-muted-foreground line-clamp-1">{event.description}</div>
-                          )}
+                          {event.description && <div className="text-sm text-muted-foreground line-clamp-1">{event.description}</div>}
                         </div>
                       </div>
                     </TableCell>
@@ -287,7 +273,7 @@ export default function Events() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={event.is_published ? 'default' : 'secondary'}>
-                        {event.is_published ? 'Published' : 'Draft'}
+                        {event.is_published ? t('published') : t('draft')}
                       </Badge>
                     </TableCell>
                     <TableCell>

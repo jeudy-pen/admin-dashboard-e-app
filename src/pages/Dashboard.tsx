@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Package, ShoppingCart, DollarSign, Users, TrendingUp, Clock } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, Users, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/admin/AdminLayout';
 import StatsCard from '@/components/admin/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Order {
   id: string;
@@ -17,11 +18,12 @@ interface Order {
 }
 
 export default function Dashboard() {
+  const { t } = useLanguage();
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
     totalRevenue: 0,
-    totalCustomers: 0
+    totalCustomers: 0,
   });
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,7 @@ export default function Dashboard() {
   const fetchStats = async () => {
     const [productsRes, ordersRes] = await Promise.all([
       supabase.from('products').select('id', { count: 'exact' }),
-      supabase.from('orders').select('id, total', { count: 'exact' })
+      supabase.from('orders').select('id, total', { count: 'exact' }),
     ]);
 
     const totalRevenue = ordersRes.data?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
@@ -43,7 +45,7 @@ export default function Dashboard() {
       totalProducts: productsRes.count || 0,
       totalOrders: ordersRes.count || 0,
       totalRevenue,
-      totalCustomers: ordersRes.count || 0
+      totalCustomers: ordersRes.count || 0,
     });
     setLoading(false);
   };
@@ -54,17 +56,37 @@ export default function Dashboard() {
       .select('*')
       .order('created_at', { ascending: false })
       .limit(5);
-    
+
     setRecentOrders(data || []);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-      case 'shipped': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-      case 'processing': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-      default: return 'bg-muted text-muted-foreground';
+      case 'delivered':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+      case 'shipped':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'processing':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+      default:
+        return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'processing':
+        return t('processing');
+      case 'shipped':
+        return t('shipped');
+      case 'delivered':
+        return t('delivered');
+      case 'cancelled':
+        return t('cancelled');
+      default:
+        return status;
     }
   };
 
@@ -72,47 +94,45 @@ export default function Dashboard() {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome to your admin dashboard</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
+          <p className="text-muted-foreground">{t('dashboardWelcome')}</p>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
-            title="Total Products"
+            title={t('totalProducts')}
             value={stats.totalProducts}
             icon={<Package className="h-6 w-6" />}
             trend={{ value: 12, isPositive: true }}
           />
           <StatsCard
-            title="Total Orders"
+            title={t('totalOrders')}
             value={stats.totalOrders}
             icon={<ShoppingCart className="h-6 w-6" />}
             trend={{ value: 8, isPositive: true }}
           />
           <StatsCard
-            title="Total Revenue"
+            title={t('totalRevenue')}
             value={`$${stats.totalRevenue.toLocaleString()}`}
             icon={<DollarSign className="h-6 w-6" />}
             trend={{ value: 15, isPositive: true }}
           />
           <StatsCard
-            title="Customers"
+            title={t('totalCustomers')}
             value={stats.totalCustomers}
             icon={<Users className="h-6 w-6" />}
             trend={{ value: 5, isPositive: true }}
           />
         </div>
 
-        {/* Recent Orders */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-semibold">Recent Orders</CardTitle>
+            <CardTitle className="text-lg font-semibold">{t('recentOrders')}</CardTitle>
             <Clock className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {recentOrders.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No orders yet</p>
+              <p className="text-center text-muted-foreground py-8">{t('noOrdersYet')}</p>
             ) : (
               <div className="space-y-4">
                 {recentOrders.map((order) => (
@@ -128,7 +148,7 @@ export default function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-foreground">${Number(order.total).toFixed(2)}</p>
-                      <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                      <Badge className={getStatusColor(order.status)}>{getStatusLabel(order.status)}</Badge>
                     </div>
                   </motion.div>
                 ))}

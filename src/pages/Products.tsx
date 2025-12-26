@@ -29,7 +29,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Product {
   id: string;
@@ -48,6 +49,7 @@ interface Category {
 }
 
 export default function Products() {
+  const { t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +62,7 @@ export default function Products() {
     price: '',
     stock: '',
     feature_image_url: '',
-    category_id: ''
+    category_id: '',
   });
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -71,11 +73,7 @@ export default function Products() {
   }, []);
 
   const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
-
+    const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
     if (!error) setProducts(data || []);
     setLoading(false);
   };
@@ -95,23 +93,23 @@ export default function Products() {
       price: parseFloat(formData.price) || 0,
       stock: parseInt(formData.stock) || 0,
       feature_image_url: formData.feature_image_url,
-      category_id: formData.category_id || null
+      category_id: formData.category_id || null,
     };
 
     let error;
     if (editingProduct) {
-      ({ error } = await supabase
-        .from('products')
-        .update(productData)
-        .eq('id', editingProduct.id));
+      ({ error } = await supabase.from('products').update(productData).eq('id', editingProduct.id));
     } else {
       ({ error } = await supabase.from('products').insert(productData));
     }
 
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Success', description: editingProduct ? 'Product updated' : 'Product created' });
+      toast({
+        title: t('success'),
+        description: editingProduct ? t('productUpdated') : t('productCreated'),
+      });
       setIsDialogOpen(false);
       resetForm();
       fetchProducts();
@@ -120,13 +118,13 @@ export default function Products() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!confirm(t('confirmDeleteProduct'))) return;
 
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Deleted', description: 'Product has been deleted' });
+      toast({ title: t('deleted'), description: t('productDeleted') });
       fetchProducts();
     }
   };
@@ -139,7 +137,7 @@ export default function Products() {
       price: product.price.toString(),
       stock: product.stock.toString(),
       feature_image_url: product.feature_image_url || '',
-      category_id: product.category_id || ''
+      category_id: product.category_id || '',
     });
     setIsDialogOpen(true);
   };
@@ -152,43 +150,43 @@ export default function Products() {
       price: '',
       stock: '',
       feature_image_url: '',
-      category_id: ''
+      category_id: '',
     });
   };
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = products.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Products</h1>
-            <p className="text-muted-foreground">Manage your product catalog</p>
+            <h1 className="text-2xl font-bold text-foreground">{t('products')}</h1>
+            <p className="text-muted-foreground">{t('productsSubtitle')}</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) resetForm();
+            }}
+          >
             <DialogTrigger asChild>
               <Button>
-                <Plus className="h-4 w-4 mr-2" /> Add Product
+                <Plus className="h-4 w-4 mr-2" /> {t('addProduct')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+                <DialogTitle>{editingProduct ? t('editProduct') : t('addNewProduct')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Name</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
+                  <Label>{t('name')}</Label>
+                  <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Description</Label>
+                  <Label>{t('description')}</Label>
                   <Textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -197,7 +195,7 @@ export default function Products() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Price ($)</Label>
+                    <Label>{t('price')} ($)</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -207,7 +205,7 @@ export default function Products() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Stock</Label>
+                    <Label>{t('stock')}</Label>
                     <Input
                       type="number"
                       value={formData.stock}
@@ -217,20 +215,22 @@ export default function Products() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Category</Label>
+                  <Label>{t('category')}</Label>
                   <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder={t('selectCategory')} />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Image URL</Label>
+                  <Label>{t('imageUrl')}</Label>
                   <Input
                     value={formData.feature_image_url}
                     onChange={(e) => setFormData({ ...formData, feature_image_url: e.target.value })}
@@ -239,7 +239,7 @@ export default function Products() {
                 </div>
                 <Button type="submit" className="w-full" disabled={saving}>
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  {editingProduct ? 'Update Product' : 'Create Product'}
+                  {editingProduct ? t('updateProduct') : t('createProduct')}
                 </Button>
               </form>
             </DialogContent>
@@ -250,7 +250,7 @@ export default function Products() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search products..."
+              placeholder={t('searchProducts')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -265,17 +265,17 @@ export default function Products() {
         ) : filteredProducts.length === 0 ? (
           <div className="text-center py-12 bg-card rounded-xl border border-border">
             <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No products found</p>
+            <p className="text-muted-foreground">{t('noProductsFound')}</p>
           </div>
         ) : (
           <div className="bg-card rounded-xl border border-border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('products')}</TableHead>
+                  <TableHead>{t('price')}</TableHead>
+                  <TableHead>{t('stock')}</TableHead>
+                  <TableHead className="text-right">{t('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -295,6 +295,7 @@ export default function Products() {
                               src={product.feature_image_url}
                               alt={product.name}
                               className="h-10 w-10 rounded-lg object-cover"
+                              loading="lazy"
                             />
                           ) : (
                             <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
@@ -308,9 +309,7 @@ export default function Products() {
                       </TableCell>
                       <TableCell className="font-medium">${Number(product.price).toFixed(2)}</TableCell>
                       <TableCell>
-                        <span className={product.stock < 10 ? 'text-destructive' : 'text-foreground'}>
-                          {product.stock}
-                        </span>
+                        <span className={product.stock < 10 ? 'text-destructive' : 'text-foreground'}>{product.stock}</span>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">

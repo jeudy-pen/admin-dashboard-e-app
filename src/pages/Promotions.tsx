@@ -33,6 +33,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Percent, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Promotion {
   id: string;
@@ -57,6 +58,7 @@ const initialFormData = {
 };
 
 export default function Promotions() {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
   const [formData, setFormData] = useState(initialFormData);
@@ -65,10 +67,7 @@ export default function Promotions() {
   const { data: promotions, isLoading } = useQuery({
     queryKey: ['promotions'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('promotions')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('promotions').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       return data as Promotion[];
     },
@@ -81,10 +80,10 @@ export default function Promotions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['promotions'] });
-      toast.success('Promotion created successfully');
+      toast.success(t('promotionCreatedSuccess'));
       resetForm();
     },
-    onError: () => toast.error('Failed to create promotion'),
+    onError: () => toast.error(t('failedToCreatePromotion')),
   });
 
   const updateMutation = useMutation({
@@ -94,10 +93,10 @@ export default function Promotions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['promotions'] });
-      toast.success('Promotion updated successfully');
+      toast.success(t('promotionUpdatedSuccess'));
       resetForm();
     },
-    onError: () => toast.error('Failed to update promotion'),
+    onError: () => toast.error(t('failedToUpdatePromotion')),
   });
 
   const deleteMutation = useMutation({
@@ -107,9 +106,9 @@ export default function Promotions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['promotions'] });
-      toast.success('Promotion deleted successfully');
+      toast.success(t('promotionDeletedSuccess'));
     },
-    onError: () => toast.error('Failed to delete promotion'),
+    onError: () => toast.error(t('failedToDeletePromotion')),
   });
 
   const resetForm = () => {
@@ -132,7 +131,7 @@ export default function Promotions() {
     if (editingPromotion) {
       updateMutation.mutate({ id: editingPromotion.id, ...data });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(data as any);
     }
   };
 
@@ -160,32 +159,27 @@ export default function Promotions() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Promotions</h1>
-            <p className="text-muted-foreground">Manage discounts and offers</p>
+            <h1 className="text-2xl font-bold text-foreground">{t('promotions')}</h1>
+            <p className="text-muted-foreground">{t('promotionsSubtitle')}</p>
           </div>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => resetForm()}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Promotion
+                {t('addPromotion')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>{editingPromotion ? 'Edit Promotion' : 'Add Promotion'}</DialogTitle>
+                <DialogTitle>{editingPromotion ? t('editPromotion') : t('addPromotion')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
+                  <Label htmlFor="name">{t('name')}</Label>
+                  <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">{t('description')}</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
@@ -195,22 +189,19 @@ export default function Promotions() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Discount Type</Label>
-                    <Select
-                      value={formData.discount_type}
-                      onValueChange={(v) => setFormData({ ...formData, discount_type: v })}
-                    >
+                    <Label>{t('discountType')}</Label>
+                    <Select value={formData.discount_type} onValueChange={(v) => setFormData({ ...formData, discount_type: v })}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="percentage">Percentage</SelectItem>
-                        <SelectItem value="fixed">Fixed Amount</SelectItem>
+                        <SelectItem value="percentage">{t('percentage')}</SelectItem>
+                        <SelectItem value="fixed">{t('fixedAmount')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="discount_value">Value</Label>
+                    <Label htmlFor="discount_value">{t('value')}</Label>
                     <Input
                       id="discount_value"
                       type="number"
@@ -222,7 +213,7 @@ export default function Promotions() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="start_date">Start Date</Label>
+                    <Label htmlFor="start_date">{t('startDate')}</Label>
                     <Input
                       id="start_date"
                       type="datetime-local"
@@ -232,7 +223,7 @@ export default function Promotions() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="end_date">End Date</Label>
+                    <Label htmlFor="end_date">{t('endDate')}</Label>
                     <Input
                       id="end_date"
                       type="datetime-local"
@@ -248,15 +239,13 @@ export default function Promotions() {
                     checked={formData.is_active}
                     onCheckedChange={(c) => setFormData({ ...formData, is_active: c })}
                   />
-                  <Label htmlFor="is_active">Active</Label>
+                  <Label htmlFor="is_active">{t('active')}</Label>
                 </div>
                 <div className="flex gap-2 justify-end">
                   <Button type="button" variant="outline" onClick={resetForm}>
-                    Cancel
+                    {t('cancel')}
                   </Button>
-                  <Button type="submit">
-                    {editingPromotion ? 'Update' : 'Create'}
-                  </Button>
+                  <Button type="submit">{editingPromotion ? t('update') : t('create')}</Button>
                 </div>
               </form>
             </DialogContent>
@@ -267,24 +256,24 @@ export default function Promotions() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Discount</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-24">Actions</TableHead>
+                <TableHead>{t('name')}</TableHead>
+                <TableHead>{t('discount')}</TableHead>
+                <TableHead>{t('duration')}</TableHead>
+                <TableHead>{t('status')}</TableHead>
+                <TableHead className="w-24">{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    Loading...
+                    {t('loading')}
                   </TableCell>
                 </TableRow>
               ) : promotions?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    No promotions found
+                    {t('noPromotionsFound')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -293,9 +282,7 @@ export default function Promotions() {
                     <TableCell>
                       <div>
                         <div className="font-medium">{promo.name}</div>
-                        {promo.description && (
-                          <div className="text-sm text-muted-foreground">{promo.description}</div>
-                        )}
+                        {promo.description && <div className="text-sm text-muted-foreground">{promo.description}</div>}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -313,7 +300,7 @@ export default function Promotions() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={isActive(promo) ? 'default' : 'secondary'}>
-                        {isActive(promo) ? 'Active' : 'Inactive'}
+                        {isActive(promo) ? t('active') : t('inactive')}
                       </Badge>
                     </TableCell>
                     <TableCell>
