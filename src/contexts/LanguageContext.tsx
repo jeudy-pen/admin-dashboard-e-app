@@ -310,6 +310,37 @@ export const translations: Translations = {
   // Not Found
   pageNotFound: { en: 'Oops! Page not found', km: 'អូ៎! រកមិនឃើញទំព័រ' },
   returnHome: { en: 'Return to Home', km: 'ត្រឡប់ទៅទំព័រដើម' },
+
+  // Tracking
+  tracking: { en: 'Tracking', km: 'តាមដាន' },
+  trackOrder: { en: 'Track Order', km: 'តាមដានការបញ្ជាទិញ' },
+  trackOrderSubtitle: { en: 'Enter your order number or tracking number to check status', km: 'បញ្ចូលលេខបញ្ជាទិញ ឬលេខតាមដានដើម្បីពិនិត្យស្ថានភាព' },
+  enterOrderOrTracking: { en: 'Enter order number or tracking number...', km: 'បញ្ចូលលេខបញ្ជាទិញ ឬលេខតាមដាន...' },
+  searching: { en: 'Searching...', km: 'កំពុងស្វែងរក...' },
+  orderNotFound: { en: 'Order not found', km: 'រកមិនឃើញការបញ្ជាទិញ' },
+  orderNotFoundDesc: { en: 'Please check your order number and try again', km: 'សូមពិនិត្យលេខបញ្ជាទិញរបស់អ្នក ហើយព្យាយាមម្តងទៀត' },
+  errorFetchingOrder: { en: 'Error fetching order', km: 'កំហុសក្នុងការទាញយកការបញ្ជាទិញ' },
+  trackingNumber: { en: 'Tracking Number', km: 'លេខតាមដាន' },
+  orderProgress: { en: 'Order Progress', km: 'វឌ្ឍនភាពការបញ្ជាទិញ' },
+  orderCancelled: { en: 'Order Cancelled', km: 'បានបោះបង់ការបញ្ជាទិញ' },
+  orderCancelledDesc: { en: 'This order has been cancelled', km: 'ការបញ្ជាទិញនេះត្រូវបានបោះបង់' },
+  orderedOn: { en: 'Ordered On', km: 'បញ្ជាទិញនៅ' },
+  orderItems: { en: 'Order Items', km: 'មុខទំនិញក្នុងការបញ្ជាទិញ' },
+  quantity: { en: 'Quantity', km: 'បរិមាណ' },
+  trackYourOrder: { en: 'Track Your Order', km: 'តាមដានការបញ្ជាទិញរបស់អ្នក' },
+  enterOrderNumberToTrack: { en: 'Enter your order number or tracking number to see the delivery status', km: 'បញ្ចូលលេខបញ្ជាទិញ ឬលេខតាមដានដើម្បីមើលស្ថានភាពដឹកជញ្ជូន' },
+
+  // Order Confirmation
+  orderConfirmed: { en: 'Order Confirmed!', km: 'បានបញ្ជាក់ការបញ្ជាទិញ!' },
+  thankYouForOrder: { en: 'Thank you for your order. We will process it shortly.', km: 'សូមអរគុណសម្រាប់ការបញ្ជាទិញរបស់អ្នក។ យើងនឹងដំណើរការវាក្នុងពេលឆាប់ៗ។' },
+  copied: { en: 'Copied!', km: 'បានចម្លង!' },
+  orderNumberCopied: { en: 'Order number copied to clipboard', km: 'បានចម្លងលេខបញ្ជាទិញទៅក្ដារតម្បៀតខ្ទាស់' },
+  confirmationEmailSent: { en: 'A confirmation email has been sent to', km: 'អ៊ីមែលបញ្ជាក់ត្រូវបានផ្ញើទៅ' },
+  orderStatus: { en: 'Order Status', km: 'ស្ថានភាពការបញ្ជាទិញ' },
+  orderBeingPrepared: { en: 'Your order is being prepared', km: 'ការបញ្ជាទិញរបស់អ្នកកំពុងត្រូវបានរៀបចំ' },
+  deliveryInformation: { en: 'Delivery Information', km: 'ព័ត៌មានដឹកជញ្ជូន' },
+  orderSummary: { en: 'Order Summary', km: 'សេចក្តីសង្ខេបការបញ្ជាទិញ' },
+  continueShopping: { en: 'Continue Shopping', km: 'បន្តទិញទំនិញ' },
 };
 
 interface LanguageContextType {

@@ -16,7 +16,8 @@ import {
   Tag,
   Percent,
   Calendar,
-  Bell
+  Bell,
+  MapPin
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -46,6 +47,7 @@ export default function AdminSidebar() {
     { path: '/categories', icon: FolderOpen, label: t('categories') },
     { path: '/brands', icon: Tag, label: t('brands') },
     { path: '/orders', icon: ShoppingCart, label: t('orders') },
+    { path: '/tracking', icon: MapPin, label: t('tracking') },
     { path: '/customers', icon: Users, label: t('customers') },
     { path: '/users', icon: UserCog, label: t('users') },
     { path: '/promotions', icon: Percent, label: t('promotions') },
