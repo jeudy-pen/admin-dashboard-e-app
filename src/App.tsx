@@ -18,6 +18,8 @@ import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import Search from "./pages/Search";
 import Users from "./pages/Users";
+import Tracking from "./pages/Tracking";
+import OrderConfirmation from "./pages/OrderConfirmation";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -44,6 +46,8 @@ const App = () => (
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/users" element={<Users />} />
+                <Route path="/tracking" element={<Tracking />} />
+                <Route path="/order-confirmation" element={<OrderConfirmation />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
